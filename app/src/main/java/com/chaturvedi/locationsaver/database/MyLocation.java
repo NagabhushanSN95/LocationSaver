@@ -2,22 +2,39 @@
 
 package com.chaturvedi.locationsaver.database;
 
+import android.util.Log;
+
+import java.util.Calendar;
 import java.util.StringTokenizer;
 
 public class MyLocation
 {
-	private String createdTime;
-	private String modifiedTime;
+	private int id;
+	private Time createdTime;
+	private Time modifiedTime;
 	private String name;
 	private double latitude;
 	private double longitude;
 	private String address;
 	private String notes;
 
+	public MyLocation(int id, Time createdTime, Time modifiedTime, String name, double latitude, double longitude, String address,
+					  String notes)
+	{
+		this.id = id;
+		this.createdTime = createdTime;
+		this.modifiedTime = modifiedTime;
+		this.name = name;
+		this.latitude = latitude;
+		this.longitude = longitude;
+		this.address = address;
+		this.notes = notes;
+	}
+
 	public MyLocation(String name, String location, String address, String notes)
 	{
-		this.createdTime = null;
-		this.modifiedTime = null;
+		this.createdTime = new Time(Calendar.getInstance());
+		this.modifiedTime = new Time(Calendar.getInstance());
 		this.name = name;
 		if(location.length() > 3)
 		{
@@ -33,6 +50,26 @@ public class MyLocation
 
 		this.address = address;
 		this.notes = notes;
+	}
+
+	public void setID(int ID)
+	{
+		this.id = ID;
+	}
+
+	public int getID()
+	{
+		return id;
+	}
+
+	public Time getCreatedTime()
+	{
+		return createdTime;
+	}
+
+	public Time getModifiedTime()
+	{
+		return modifiedTime;
 	}
 
 	public String getName()

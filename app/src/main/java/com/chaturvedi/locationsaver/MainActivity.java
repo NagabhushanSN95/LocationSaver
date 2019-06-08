@@ -23,7 +23,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.chaturvedi.locationsaver.database.DatabaseAdapter;
 import com.chaturvedi.locationsaver.database.MyLocation;
+import com.chaturvedi.locationsaver.database.Time;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -32,6 +34,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Locale;
@@ -39,6 +42,7 @@ import java.util.StringTokenizer;
 
 public class MainActivity extends AppCompatActivity
 {
+	private DatabaseAdapter databaseAdapter;
 	private ArrayList<MyLocation> locationsList;
 
 	private LinearLayout parentLayout;
@@ -49,13 +53,16 @@ public class MainActivity extends AppCompatActivity
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
+		databaseAdapter = new DatabaseAdapter(MainActivity.this);
 		buildLayout();
+
+		// If the app is opened from other apps to save location, then create addLocation dialog
 		Intent intent = getIntent();
-		if(intent.getAction().equals("android.intent.action.VIEW"))
+		if((intent!=null) && (intent.getAction()!=null) && (intent.getAction().equals("android.intent.action.VIEW")))
 		{
 			String dataString = intent.getDataString();
 			String[] tokens = dataString.split(":|=| ");
-			startAddLocation(tokens[3]);			// tokens[3] contains latitude,longitude
+			buildAddLocationDialog(tokens[3]);			// tokens[3] contains latitude,longitude
 		}
 	}
 
@@ -71,7 +78,7 @@ public class MainActivity extends AppCompatActivity
 		switch (menuItem.getItemId())
 		{
 			case R.id.action_add:
-				startAddLocation();
+				buildAddLocationDialog();
 				return true;
 		}
 		return true;
@@ -79,8 +86,7 @@ public class MainActivity extends AppCompatActivity
 
 	private void buildLayout()
 	{
-		locationsList = new ArrayList<>();
-		readLocations();
+		locationsList = databaseAdapter.getAllLocations();
 		sortLocationsByName();
 
 		parentLayout = (LinearLayout) findViewById(R.id.parentLayout);
@@ -155,7 +161,7 @@ public class MainActivity extends AppCompatActivity
 		return locationLayout;
 	}
 
-	private void readLocations()
+	private void readLocationsFromSD()
 	{
 		File folder = new File(Environment.getExternalStoragePublicDirectory("Chaturvedi"), "Location Saver");
 		if(!folder.exists())
@@ -212,7 +218,7 @@ public class MainActivity extends AppCompatActivity
 		});
 	}
 
-	private void startAddLocation()
+	private void buildAddLocationDialog()
 	{
 		final AlertDialog.Builder addLocationBuilder = new AlertDialog.Builder(this);
 		addLocationBuilder.setTitle("Add Location");
@@ -246,8 +252,11 @@ public class MainActivity extends AppCompatActivity
 				String address = ((EditText)addLocationDialogView.findViewById(R.id.editText_address)).getText().toString().trim();
 				String notes = ((EditText)addLocationDialogView.findViewById(R.id.editText_notes)).getText().toString().trim();
 
-				saveLocation(name,location,address,notes);
-				LinearLayout locationLayout = displayNewLocation(new MyLocation(name,location,address,notes));
+				MyLocation newLocation = new MyLocation(name, location, address, notes);
+				databaseAdapter.addLocation(newLocation);
+				locationsList.add(newLocation);
+//				saveLocationToSD(name,location,address,notes);
+				LinearLayout locationLayout = displayNewLocation(newLocation);
 				locationLayout.requestFocus();
 
 				// Stop listening for location
@@ -280,7 +289,7 @@ public class MainActivity extends AppCompatActivity
 		addLocationBuilder.show();
 	}
 
-	private void startAddLocation(String location)
+	private void buildAddLocationDialog(String location)
 	{
 		final AlertDialog.Builder addLocationBuilder = new AlertDialog.Builder(this);
 		addLocationBuilder.setTitle("Add Location");
@@ -299,7 +308,7 @@ public class MainActivity extends AppCompatActivity
 				String address = ((EditText)addLocationDialogView.findViewById(R.id.editText_address)).getText().toString().trim();
 				String notes = ((EditText)addLocationDialogView.findViewById(R.id.editText_notes)).getText().toString().trim();
 
-				saveLocation(name,location,address,notes);
+				saveLocationToSD(name,location,address,notes);
 				LinearLayout locationLayout = displayNewLocation(new MyLocation(name,location,address,notes));
 				locationLayout.requestFocus();
 			}
@@ -308,7 +317,16 @@ public class MainActivity extends AppCompatActivity
 		addLocationBuilder.show();
 	}
 
-	private void saveLocation(String name, String location, String address, String notes)
+	private void addLocationToDatabase(String name, String location, String address, String notes)
+	{
+		StringTokenizer tokenizer = new StringTokenizer(location,",");
+		MyLocation myLocation = new MyLocation(databaseAdapter.getNumLocations()+1, new Time(Calendar.getInstance()),
+				new Time(Calendar.getInstance()), name, Double.parseDouble(tokenizer.nextToken()),
+				Double.parseDouble(tokenizer.nextToken()), address, notes);
+		databaseAdapter.addLocation(myLocation);
+	}
+
+	private void saveLocationToSD(String name, String location, String address, String notes)
 	{
 		File folder = new File(Environment.getExternalStoragePublicDirectory("Chaturvedi"), "Location Saver");
 		if(!folder.exists())
