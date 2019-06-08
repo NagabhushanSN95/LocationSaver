@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Location Saver</string>
+    <string name="krishna">Shree KRISHNAya Namaha</string>
+    <string name="action_add">Add Location</string>
+    <string name="action_export">Export Data</string>
+    <string name="action_import">Import Data</string>
+    <string name="hint_address">Address</string>
+    <string name="hint_location">Coordinates</string>
+    <string name="hint_name">Name</string>
+    <string name="hint_notes">Notes</string>
+    <string name="title_activity_locations">LocationsActivity</string>
+</resources>

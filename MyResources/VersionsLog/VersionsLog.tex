@@ -1,0 +1,36 @@
+% Shree KRISHNAya Namaha
+\documentclass{article}
+\title{LocationSaver Android App - Versions log}
+\author{Nagabhushan S N}
+\usepackage[a4paper,margin=1in,footskip=0.25in]{geometry}
+\usepackage{hyperref}
+\hypersetup {
+  colorlinks = true,
+  linkcolor = black
+}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+\section{v1.0.0}
+\begin{itemize}
+\item Created App
+  \begin{itemize}
+  \item Name: Location Saver
+  \item Package: com.chaturvedi.locationsaver
+  \end{itemize}
+\item In MainActivity, saved locations will be displayed. On clicking, ``Complete Action Using" dialog will be displayed to open the location in Maps.
+\item 3 MenuItems added: `Export', `Import', `Add Location'.
+\item On clicking `Add Location', coordinates will be taken using GPS. A dialog is displayed which contains 
+  \begin{itemize}
+  \item Name: To be entered
+  \item Coordinates: Filled automatically
+  \item Address: To be entered
+  \item Notes: To be entered
+  \end{itemize}
+\item On adding, location will be saved on SD Card: Internal/chaturvedi/LocationSaver/Locations.txt
+
+\end{itemize}
+\end{document}
