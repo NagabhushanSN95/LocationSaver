@@ -32,7 +32,10 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Locale;
+import java.util.StringTokenizer;
 
 public class MainActivity extends AppCompatActivity
 {
@@ -47,6 +50,13 @@ public class MainActivity extends AppCompatActivity
 		setContentView(R.layout.activity_main);
 
 		buildLayout();
+		Intent intent = getIntent();
+		if(intent.getAction().equals("android.intent.action.VIEW"))
+		{
+			String dataString = intent.getDataString();
+			String[] tokens = dataString.split(":|=| ");
+			startAddLocation(tokens[3]);			// tokens[3] contains latitude,longitude
+		}
 	}
 
 	@Override
@@ -71,6 +81,7 @@ public class MainActivity extends AppCompatActivity
 	{
 		locationsList = new ArrayList<>();
 		readLocations();
+		sortLocationsByName();
 
 		parentLayout = (LinearLayout) findViewById(R.id.parentLayout);
 		for(MyLocation myLocation : locationsList)
@@ -189,6 +200,18 @@ public class MainActivity extends AppCompatActivity
 		}
 	}
 
+	private void sortLocationsByName()
+	{
+		Collections.sort(locationsList, new Comparator<MyLocation>()
+		{
+			@Override
+			public int compare(MyLocation lhs, MyLocation rhs)
+			{
+				return lhs.getName().compareTo(rhs.getName());
+			}
+		});
+	}
+
 	private void startAddLocation()
 	{
 		final AlertDialog.Builder addLocationBuilder = new AlertDialog.Builder(this);
@@ -236,6 +259,49 @@ public class MainActivity extends AppCompatActivity
 				{
 					Log.d("MainActivity", e.getMessage(), e.fillInStackTrace());
 				}
+			}
+		});
+		addLocationBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener()
+		{
+			@Override
+			public void onClick(DialogInterface dialog, int which)
+			{
+				// Stop listening for location
+				try
+				{
+					locationManager.removeUpdates(locationListener);
+				}
+				catch (SecurityException e)
+				{
+					Log.d("MainActivity", e.getMessage(), e.fillInStackTrace());
+				}
+			}
+		});
+		addLocationBuilder.show();
+	}
+
+	private void startAddLocation(String location)
+	{
+		final AlertDialog.Builder addLocationBuilder = new AlertDialog.Builder(this);
+		addLocationBuilder.setTitle("Add Location");
+		LayoutInflater inflater = LayoutInflater.from(this);
+		final LinearLayout addLocationDialogView = (LinearLayout) inflater.inflate(R.layout.layout_add_location, null);
+		((EditText)addLocationDialogView.findViewById(R.id.editText_location)).setText(location);
+		addLocationBuilder.setView(addLocationDialogView);
+
+		addLocationBuilder.setPositiveButton("Add", new DialogInterface.OnClickListener()
+		{
+			@Override
+			public void onClick(DialogInterface dialog, int which)
+			{
+				String name = ((EditText)addLocationDialogView.findViewById(R.id.editText_name)).getText().toString().trim();
+				String location = ((EditText)addLocationDialogView.findViewById(R.id.editText_location)).getText().toString().trim();
+				String address = ((EditText)addLocationDialogView.findViewById(R.id.editText_address)).getText().toString().trim();
+				String notes = ((EditText)addLocationDialogView.findViewById(R.id.editText_notes)).getText().toString().trim();
+
+				saveLocation(name,location,address,notes);
+				LinearLayout locationLayout = displayNewLocation(new MyLocation(name,location,address,notes));
+				locationLayout.requestFocus();
 			}
 		});
 		addLocationBuilder.setNegativeButton("Cancel", null);
