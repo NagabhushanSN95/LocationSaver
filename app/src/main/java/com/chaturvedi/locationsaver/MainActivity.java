@@ -37,7 +37,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Locale;
 import java.util.StringTokenizer;
 
 public class MainActivity extends AppCompatActivity
@@ -80,8 +79,31 @@ public class MainActivity extends AppCompatActivity
 			case R.id.action_add:
 				buildAddLocationDialog();
 				return true;
+
+			case R.id.action_export:
+				exportLocationsToSD();
+				return true;
+
+			case R.id.action_import:
+				importLocationsFromSD();
+				return true;
 		}
 		return true;
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent intent)
+	{
+		switch (requestCode)
+		{
+			case Constants.CODE_FILE_CHOOSER:
+				if(resultCode == RESULT_OK)
+				{
+					// Get the Uri of the selected file
+					Uri uri = intent.getData();
+					readLocationsFromSD(uri.getPath());
+				}
+		}
 	}
 
 	private void buildLayout()
@@ -96,10 +118,16 @@ public class MainActivity extends AppCompatActivity
 		}
 	}
 
+	private void rebuildLayout()
+	{
+		parentLayout.removeAllViews();
+		buildLayout();
+	}
+
 	private LinearLayout displayNewLocation(final MyLocation myLocation)
 	{
 		LayoutInflater inflater = LayoutInflater.from(this);
-		LinearLayout locationLayout = (LinearLayout) inflater.inflate(R.layout.layout_location,null);
+		LinearLayout locationLayout = (LinearLayout) inflater.inflate(R.layout.layout_location, parentLayout, false);
 		((TextView)locationLayout.findViewById(R.id.textView_name)).setText(myLocation.getName());
 		parentLayout.addView(locationLayout);
 
@@ -112,7 +140,7 @@ public class MainActivity extends AppCompatActivity
 				MyLocation myLocation1 = locationsList.get(slno);
 				if((myLocation1.getLatitude()!=0) || (myLocation1.getLongitude()!=0))
 				{
-					String uri = String.format(Locale.ENGLISH, "geo:%f,%f (%s)", myLocation1.getLatitude(), myLocation1.getLongitude(), myLocation1.getName());
+//					String uri = String.format(Locale.ENGLISH, "geo:%f,%f (%s)", myLocation1.getLatitude(), myLocation1.getLongitude(), myLocation1.getName());
 					String geoUri = "http://maps.google.com/maps?q=loc:" + myLocation1.getLatitude() + "," + myLocation1.getLongitude() + " (" + myLocation1.getName() + ")";
 					Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(geoUri));
 					MainActivity.this.startActivity(intent);
@@ -140,7 +168,7 @@ public class MainActivity extends AppCompatActivity
 								MyLocation myLocation1 = locationsList.get(slno);
 								if((myLocation1.getLatitude()!=0) || (myLocation1.getLongitude()!=0))
 								{
-									String uri = String.format(Locale.ENGLISH, "geo:%f,%f (%s)", myLocation1.getLatitude(), myLocation1.getLongitude(), myLocation1.getName());
+//									String uri = String.format(Locale.ENGLISH, "geo:%f,%f (%s)", myLocation1.getLatitude(), myLocation1.getLongitude(), myLocation1.getName());
 									String geoUri = "http://maps.google.com/maps?q=loc:" + myLocation1.getLatitude() + "," + myLocation1.getLongitude() + " (" + myLocation1.getName() + ")";
 									Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(geoUri));
 									MainActivity.this.startActivity(intent);
@@ -159,51 +187,6 @@ public class MainActivity extends AppCompatActivity
 		});
 
 		return locationLayout;
-	}
-
-	private void readLocationsFromSD()
-	{
-		File folder = new File(Environment.getExternalStoragePublicDirectory("Chaturvedi"), "Location Saver");
-		if(!folder.exists())
-		{
-			folder.mkdirs();
-		}
-
-		String fileName = "Locations.txt";
-		File locationsFile = new File(folder, fileName);
-		if(!locationsFile.exists())
-		{
-			return;
-		}
-
-		try
-		{
-			BufferedReader locationsReader = new BufferedReader(new FileReader(locationsFile));
-
-			// To remove initial header
-			locationsReader.readLine();
-			locationsReader.readLine();
-			locationsReader.readLine();
-			locationsReader.readLine();
-			locationsReader.readLine();
-
-			String line = locationsReader.readLine();
-			while(line != null)
-			{
-				String name = line;
-				String location = locationsReader.readLine().trim();
-				String address = locationsReader.readLine();
-				String notes = locationsReader.readLine();
-				locationsReader.readLine();
-				line = locationsReader.readLine();
-				MyLocation myLocation = new MyLocation(name,location,address,notes);
-				locationsList.add(myLocation);
-			}
-		}
-		catch (IOException e)
-		{
-			Log.d("MainActivity",e.getMessage(),e.fillInStackTrace());
-		}
 	}
 
 	private void sortLocationsByName()
@@ -361,6 +344,103 @@ public class MainActivity extends AppCompatActivity
 		{
 			Log.d("MainActivity",e.getMessage(),e.fillInStackTrace());
 		}
+	}
+
+	private void exportLocationsToSD()
+	{
+		File folder = new File(Environment.getExternalStoragePublicDirectory("Android"), "Chaturvedi/Location Saver");
+		if(!folder.exists())
+		{
+			folder.mkdirs();
+		}
+
+		String fileName = "Locations-" + new Time(Calendar.getInstance()).getTimeInFileNameFormat() + ".txt";
+		File locationsFile = new File(folder, fileName);
+		if(!locationsFile.exists())
+		{
+			try
+			{
+				locationsFile.createNewFile();
+			}
+			catch (IOException e)
+			{
+				Log.d("MainActivity",e.getMessage(),e.fillInStackTrace());
+			}
+		}
+
+		try
+		{
+			BufferedWriter locationWriter = new BufferedWriter(new FileWriter(locationsFile,true));
+			locationWriter.write("Name\n");
+			locationWriter.write("Coordinates\n");
+			locationWriter.write("Address\n");
+			locationWriter.write("Notes\n\n");
+
+			for(MyLocation myLocation : locationsList)
+			{
+				locationWriter.write(myLocation.getName() + "\n");
+				locationWriter.write(myLocation.getLocationString() + "\n");
+				locationWriter.write(myLocation.getAddress() + "\n");
+				locationWriter.write(myLocation.getNotes() + "\n\n");
+			}
+			locationWriter.close();
+
+			Toast.makeText(this, "Export Data Successful", Toast.LENGTH_LONG).show();
+		}
+		catch (IOException e)
+		{
+			Log.d("MainActivity",e.getMessage(),e.fillInStackTrace());
+		}
+	}
+
+	private void importLocationsFromSD()
+	{
+		// Start Activity to choose file
+		Intent fileIntent = new Intent(Intent.ACTION_GET_CONTENT);
+		fileIntent.setType("file/*"); // intent type to filter application based on your requirement
+		startActivityForResult(fileIntent, Constants.CODE_FILE_CHOOSER);
+	}
+
+	private void readLocationsFromSD(String path)
+	{
+		File importFile = new File(path);
+
+		ArrayList<MyLocation> myLocations = new ArrayList<>();
+		try
+		{
+			BufferedReader locationsReader = new BufferedReader(new FileReader(importFile));
+
+			// To remove initial header
+			locationsReader.readLine();
+			locationsReader.readLine();
+			locationsReader.readLine();
+			locationsReader.readLine();
+			locationsReader.readLine();
+
+			int nextID = locationsList.size()+1;
+			String line = locationsReader.readLine();
+			while(line != null)
+			{
+				String name = line;
+				String location = locationsReader.readLine().trim();
+				String address = locationsReader.readLine();
+				String notes = locationsReader.readLine();
+				locationsReader.readLine();
+				line = locationsReader.readLine();
+				MyLocation myLocation = new MyLocation(name,location,address,notes);
+				myLocation.setID(nextID++);
+				myLocations.add(myLocation);
+			}
+		}
+		catch (IOException | NumberFormatException e)
+		{
+			Log.d("MainActivity",e.getMessage(),e.fillInStackTrace());
+			int numLocationsRead = myLocations.size();
+			Toast.makeText(MainActivity.this, "File has been corrupted. " + numLocationsRead + " Locations recovered",
+					Toast.LENGTH_LONG).show();
+		}
+		databaseAdapter.addAllLocations(myLocations);
+		rebuildLayout();
 	}
 
 	private class MyLocationListener implements LocationListener

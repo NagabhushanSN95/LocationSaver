@@ -88,7 +88,7 @@ public class DatabaseAdapter extends SQLiteOpenHelper
 		values.put(KEY_LATITUDE, myLocation.getLatitude());
 		values.put(KEY_LONGITUDE, myLocation.getLongitude());
 		values.put(KEY_ADDRESS, myLocation.getAddress());
-		values.put(KEY_NOTES, myLocation.getName());
+		values.put(KEY_NOTES, myLocation.getNotes());
 
 		// Inserting Row
 		db.insert(TABLE_LOCATIONS, null, values);
@@ -109,7 +109,7 @@ public class DatabaseAdapter extends SQLiteOpenHelper
 			values.put(KEY_LATITUDE, myLocation.getLatitude());
 			values.put(KEY_LONGITUDE, myLocation.getLongitude());
 			values.put(KEY_ADDRESS, myLocation.getAddress());
-			values.put(KEY_NOTES, myLocation.getName());
+			values.put(KEY_NOTES, myLocation.getNotes());
 
 			db.insert(TABLE_LOCATIONS, null, values);
 		}

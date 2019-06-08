@@ -1,5 +1,6 @@
 package com.chaturvedi.locationsaver.database;
 
+import java.text.DecimalFormat;
 import java.util.Calendar;
 import java.util.StringTokenizer;
 
@@ -148,5 +149,12 @@ public class Time
 			return true;
 		else
 			return false;
+	}
+
+	public String getTimeInFileNameFormat()
+	{
+		DecimalFormat formatter = new DecimalFormat("00");
+		return year + "" + formatter.format(month) + "" + formatter.format(date) + "" + formatter.format(hour) + "" +
+				formatter.format(minute) + "" + formatter.format(second);
 	}
 }

@@ -47,4 +47,11 @@
 \item Update01To03 class reads data from SD, saves it to database and deletes file in SD
 \item SplashActivity created (no splash screen for now). It just checks for app updates and if found, runs the corresponding Update classes and starts MainActivity.
 \end{itemize}
+
+\section{v1.0.3}
+\begin{itemize}
+\item Import and Export functionalities added.
+\item On Export, a `.txt' file will be saved in `Internal/Android/Chaturvedi/Location Saver' folder with name `Locations-YYYYMMDDhhmmss.txt'
+\item On Import, FileChooser will be opened to choose the file. On choosing, locations will be read and saved to database. In case the file is corrupted, possible locations will be read and a Toast text will be displayed.
+\end{itemize}
 \end{document}
