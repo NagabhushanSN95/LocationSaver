@@ -1,6 +1,6 @@
 // Shree KRISHNAya Namaha
 
-package com.chaturvedi.locationsaver.database;
+package com.krishna.nagabhushansn95.locationsaver.database;
 
 import android.content.ContentValues;
 import android.content.Context;

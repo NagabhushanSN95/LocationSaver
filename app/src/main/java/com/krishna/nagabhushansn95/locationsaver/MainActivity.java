@@ -1,6 +1,6 @@
 // Shree KRISHNAya Namaha
 
-package com.chaturvedi.locationsaver;
+package com.krishna.nagabhushansn95.locationsaver;
 
 import android.Manifest;
 import android.content.Context;
@@ -28,9 +28,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.chaturvedi.locationsaver.database.DatabaseAdapter;
-import com.chaturvedi.locationsaver.database.MyLocation;
-import com.chaturvedi.locationsaver.database.Time;
+import com.krishna.nagabhushansn95.locationsaver.database.DatabaseAdapter;
+import com.krishna.nagabhushansn95.locationsaver.database.MyLocation;
+import com.krishna.nagabhushansn95.locationsaver.database.Time;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

@@ -1,6 +1,6 @@
 // Shree KRISHNAya Namaha
 
-package com.chaturvedi.locationsaver;
+package com.krishna.nagabhushansn95.locationsaver;
 
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;

@@ -1,4 +1,4 @@
-package com.chaturvedi.locationsaver;
+package com.krishna.nagabhushansn95.locationsaver;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
