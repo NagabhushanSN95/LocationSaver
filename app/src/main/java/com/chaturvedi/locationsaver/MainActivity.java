@@ -2,15 +2,20 @@
 
 package com.chaturvedi.locationsaver;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -37,10 +42,14 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.StringTokenizer;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity
 {
+	public static final int ADD_LOCATION_REQUEST_PERMISSION = 101;
+	public static final int IMPORT_REQUEST_PERMISSION = 102;
+	public static final int EXPORT_REQUEST_PERMISSION = 103;
+
 	private DatabaseAdapter databaseAdapter;
 	private ArrayList<MyLocation> locationsList;
 
@@ -57,11 +66,12 @@ public class MainActivity extends AppCompatActivity
 
 		// If the app is opened from other apps to save location, then create addLocation dialog
 		Intent intent = getIntent();
-		if((intent!=null) && (intent.getAction()!=null) && (intent.getAction().equals("android.intent.action.VIEW")))
+		if ((intent != null) && (intent.getAction() != null) && (intent.getAction().equals(
+				"android.intent.action.VIEW")))
 		{
 			String dataString = intent.getDataString();
 			String[] tokens = dataString.split(":|=| ");
-			buildAddLocationDialog(tokens[3]);			// tokens[3] contains latitude,longitude
+			buildAddLocationDialog(tokens[3]);            // tokens[3] contains latitude,longitude
 		}
 	}
 
@@ -77,18 +87,58 @@ public class MainActivity extends AppCompatActivity
 		switch (menuItem.getItemId())
 		{
 			case R.id.action_add:
-				buildAddLocationDialog();
+				// buildAddLocationDialog();
+				checkAddLocationPermissions();
 				return true;
 
 			case R.id.action_export:
-				exportLocationsToSD();
+				// exportLocationsToSD();
+				checkExportPermissions();
 				return true;
 
 			case R.id.action_import:
-				importLocationsFromSD();
+				// importLocationsFromSD();
+				checkImportPermissions();
 				return true;
 		}
 		return true;
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+										   @NonNull int[] grantResults)
+	{
+		boolean permissionGranted = (grantResults.length > 0) && (grantResults[0] == PackageManager.PERMISSION_GRANTED);
+		switch (requestCode)
+		{
+			case ADD_LOCATION_REQUEST_PERMISSION:
+				buildAddLocationDialog();
+				break;
+
+			case IMPORT_REQUEST_PERMISSION:
+				if(permissionGranted)
+				{
+					importLocationsFromSD();
+				}
+				else
+				{
+					Toast.makeText(MainActivity.this, "Please provide Read permission to import locations " +
+							"from SD card", Toast.LENGTH_LONG).show();
+				}
+				break;
+
+			case EXPORT_REQUEST_PERMISSION:
+				if(permissionGranted)
+				{
+					exportLocationsToSD();
+				}
+				else
+				{
+					Toast.makeText(MainActivity.this, "Please provide Write permission to export locations " +
+							"to SD card", Toast.LENGTH_LONG).show();
+				}
+				break;
+		}
 	}
 
 	@Override
@@ -97,12 +147,63 @@ public class MainActivity extends AppCompatActivity
 		switch (requestCode)
 		{
 			case Constants.CODE_FILE_CHOOSER:
-				if(resultCode == RESULT_OK)
+				if (resultCode == RESULT_OK)
 				{
 					// Get the Uri of the selected file
-					Uri uri = intent.getData();
-					readLocationsFromSD(uri.getPath());
+					String absolutePath = Objects.requireNonNull(intent.getData()).getPath();
+					absolutePath = Objects.requireNonNull(absolutePath)
+							.replaceAll("/document/primary:", "/storage/emulated/0/");
+					System.out.println(absolutePath);
+					readLocationsFromSD(absolutePath);
 				}
+		}
+	}
+
+	private void checkAddLocationPermissions()
+	{
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+		{
+			// Permission is not granted
+			ActivityCompat.requestPermissions(MainActivity.this,
+					new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+					ADD_LOCATION_REQUEST_PERMISSION);
+		}
+		else
+		{
+			// Permission Granted
+			buildAddLocationDialog();
+		}
+	}
+
+	private void checkImportPermissions()
+	{
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+		{
+			// Permission is not granted
+			ActivityCompat.requestPermissions(MainActivity.this,
+					new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+					IMPORT_REQUEST_PERMISSION);
+		}
+		else
+		{
+			// Permission Granted
+			importLocationsFromSD();
+		}
+	}
+
+	private void checkExportPermissions()
+	{
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+		{
+			// Permission is not granted
+			ActivityCompat.requestPermissions(MainActivity.this,
+					new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+					EXPORT_REQUEST_PERMISSION);
+		}
+		else
+		{
+			// Permission Granted
+			exportLocationsToSD();
 		}
 	}
 
@@ -111,8 +212,8 @@ public class MainActivity extends AppCompatActivity
 		locationsList = databaseAdapter.getAllLocations();
 		sortLocationsByName();
 
-		parentLayout = (LinearLayout) findViewById(R.id.parentLayout);
-		for(MyLocation myLocation : locationsList)
+		parentLayout = findViewById(R.id.parentLayout);
+		for (MyLocation myLocation : locationsList)
 		{
 			displayNewLocation(myLocation);
 		}
@@ -127,8 +228,9 @@ public class MainActivity extends AppCompatActivity
 	private LinearLayout displayNewLocation(final MyLocation myLocation)
 	{
 		LayoutInflater inflater = LayoutInflater.from(this);
-		LinearLayout locationLayout = (LinearLayout) inflater.inflate(R.layout.layout_location, parentLayout, false);
-		((TextView)locationLayout.findViewById(R.id.textView_name)).setText(myLocation.getName());
+		LinearLayout locationLayout = (LinearLayout) inflater.inflate(R.layout.layout_location,
+				parentLayout, false);
+		((TextView) locationLayout.findViewById(R.id.textView_name)).setText(myLocation.getName());
 		parentLayout.addView(locationLayout);
 
 		locationLayout.setOnClickListener(new View.OnClickListener()
@@ -138,10 +240,12 @@ public class MainActivity extends AppCompatActivity
 			{
 				int slno = parentLayout.indexOfChild(view);
 				MyLocation myLocation1 = locationsList.get(slno);
-				if((myLocation1.getLatitude()!=0) || (myLocation1.getLongitude()!=0))
+				if ((myLocation1.getLatitude() != 0) || (myLocation1.getLongitude() != 0))
 				{
-//					String uri = String.format(Locale.ENGLISH, "geo:%f,%f (%s)", myLocation1.getLatitude(), myLocation1.getLongitude(), myLocation1.getName());
-					String geoUri = "http://maps.google.com/maps?q=loc:" + myLocation1.getLatitude() + "," + myLocation1.getLongitude() + " (" + myLocation1.getName() + ")";
+//					String uri = String.format(Locale.ENGLISH, "geo:%f,%f (%s)", myLocation1
+//					.getLatitude(), myLocation1.getLongitude(), myLocation1.getName());
+					String geoUri =
+							"http://maps.google.com/maps?q=loc:" + myLocation1.getLatitude() + "," + myLocation1.getLongitude() + " (" + myLocation1.getName() + ")";
 					Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(geoUri));
 					MainActivity.this.startActivity(intent);
 				}
@@ -161,22 +265,35 @@ public class MainActivity extends AppCompatActivity
 					@Override
 					public void onClick(DialogInterface dialog, int optionNo)
 					{
+						int slno = parentLayout.indexOfChild(view);
+						final MyLocation myLocation1 = locationsList.get(slno);
 						switch (optionNo)
 						{
-							case 0:				// Open in Maps
-								int slno = parentLayout.indexOfChild(view);
-								MyLocation myLocation1 = locationsList.get(slno);
-								if((myLocation1.getLatitude()!=0) || (myLocation1.getLongitude()!=0))
+							case 0:                // Open in Maps
+								if ((myLocation1.getLatitude() != 0) || (myLocation1.getLongitude() != 0))
 								{
-//									String uri = String.format(Locale.ENGLISH, "geo:%f,%f (%s)", myLocation1.getLatitude(), myLocation1.getLongitude(), myLocation1.getName());
-									String geoUri = "http://maps.google.com/maps?q=loc:" + myLocation1.getLatitude() + "," + myLocation1.getLongitude() + " (" + myLocation1.getName() + ")";
-									Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(geoUri));
+//									String uri = String.format(Locale.ENGLISH, "geo:%f,%f (%s)",
+//									myLocation1.getLatitude(), myLocation1.getLongitude(),
+//									myLocation1.getName());
+									String geoUri =
+											"http://maps.google.com/maps?q=loc:" + myLocation1.getLatitude() + "," + myLocation1.getLongitude() + " (" + myLocation1.getName() + ")";
+									Intent intent = new Intent(Intent.ACTION_VIEW,
+											Uri.parse(geoUri));
 									MainActivity.this.startActivity(intent);
 								}
 								break;
 
+							case 2:
+								editLocation(slno);
+								break;
+
+							case 3:
+								deleteLocation(slno);
+								break;
+
 							default:
-								Toast.makeText(MainActivity.this, "Coming Soon", Toast.LENGTH_LONG).show();
+								Toast.makeText(MainActivity.this, "Coming Soon",
+										Toast.LENGTH_LONG).show();
 								break;
 						}
 					}
@@ -206,23 +323,30 @@ public class MainActivity extends AppCompatActivity
 		final AlertDialog.Builder addLocationBuilder = new AlertDialog.Builder(this);
 		addLocationBuilder.setTitle("Add Location");
 		LayoutInflater inflater = LayoutInflater.from(this);
-		final LinearLayout addLocationDialogView = (LinearLayout) inflater.inflate(R.layout.layout_add_location, null);
+		final LinearLayout addLocationDialogView =
+				(LinearLayout) inflater.inflate(R.layout.layout_add_location, null);
 		addLocationBuilder.setView(addLocationDialogView);
 
-		final LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
-		final LocationListener locationListener = new MyLocationListener((EditText) addLocationDialogView.findViewById(R.id.editText_location));
+		final LocationManager locationManager =
+				(LocationManager) getSystemService(Context.LOCATION_SERVICE);
+		final LocationListener locationListener =
+				new MyLocationListener((EditText) addLocationDialogView.findViewById(R.id.editText_location));
 		try
 		{
-			locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,5000,10,locationListener);
+			locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 10,
+					locationListener);
 		}
-		catch(SecurityException e)
+		catch (SecurityException e)
 		{
-			Log.d("MainActivity",e.getMessage(), e.fillInStackTrace());
+			Log.d("MainActivity", e.getMessage(), e.fillInStackTrace());
 		}
-		/*if(ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+		/*if(ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION) !=
+		PackageManager.PERMISSION_GRANTED)
 		{
-			ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION},101);
-			locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,5000,10,locationListener);
+			ActivityCompat.requestPermissions(this,new String[]{Manifest.permission
+			.ACCESS_FINE_LOCATION},101);
+			locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,5000,10,
+			locationListener);
 		}*/
 
 		addLocationBuilder.setPositiveButton("Add", new DialogInterface.OnClickListener()
@@ -230,12 +354,17 @@ public class MainActivity extends AppCompatActivity
 			@Override
 			public void onClick(DialogInterface dialog, int which)
 			{
-				String name = ((EditText)addLocationDialogView.findViewById(R.id.editText_name)).getText().toString().trim();
-				String location = ((EditText)addLocationDialogView.findViewById(R.id.editText_location)).getText().toString().trim();
-				String address = ((EditText)addLocationDialogView.findViewById(R.id.editText_address)).getText().toString().trim();
-				String notes = ((EditText)addLocationDialogView.findViewById(R.id.editText_notes)).getText().toString().trim();
+				String name =
+						((EditText) addLocationDialogView.findViewById(R.id.editText_name)).getText().toString().trim();
+				String location =
+						((EditText) addLocationDialogView.findViewById(R.id.editText_location)).getText().toString().trim();
+				String address =
+						((EditText) addLocationDialogView.findViewById(R.id.editText_address)).getText().toString().trim();
+				String notes =
+						((EditText) addLocationDialogView.findViewById(R.id.editText_notes)).getText().toString().trim();
 
 				MyLocation newLocation = new MyLocation(name, location, address, notes);
+				newLocation.setID(locationsList.size() + 1);
 				databaseAdapter.addLocation(newLocation);
 				locationsList.add(newLocation);
 //				saveLocationToSD(name,location,address,notes);
@@ -272,13 +401,21 @@ public class MainActivity extends AppCompatActivity
 		addLocationBuilder.show();
 	}
 
+	/**
+	 * This method is called when Location Saver is opened from Whatsapp or other apps to save the
+	 * location sent during
+	 * the intent and not the current location
+	 *
+	 * @param location 12.059856,24.5686846
+	 */
 	private void buildAddLocationDialog(String location)
 	{
 		final AlertDialog.Builder addLocationBuilder = new AlertDialog.Builder(this);
 		addLocationBuilder.setTitle("Add Location");
 		LayoutInflater inflater = LayoutInflater.from(this);
-		final LinearLayout addLocationDialogView = (LinearLayout) inflater.inflate(R.layout.layout_add_location, null);
-		((EditText)addLocationDialogView.findViewById(R.id.editText_location)).setText(location);
+		final LinearLayout addLocationDialogView =
+				(LinearLayout) inflater.inflate(R.layout.layout_add_location, null);
+		((EditText) addLocationDialogView.findViewById(R.id.editText_location)).setText(location);
 		addLocationBuilder.setView(addLocationDialogView);
 
 		addLocationBuilder.setPositiveButton("Add", new DialogInterface.OnClickListener()
@@ -286,13 +423,20 @@ public class MainActivity extends AppCompatActivity
 			@Override
 			public void onClick(DialogInterface dialog, int which)
 			{
-				String name = ((EditText)addLocationDialogView.findViewById(R.id.editText_name)).getText().toString().trim();
-				String location = ((EditText)addLocationDialogView.findViewById(R.id.editText_location)).getText().toString().trim();
-				String address = ((EditText)addLocationDialogView.findViewById(R.id.editText_address)).getText().toString().trim();
-				String notes = ((EditText)addLocationDialogView.findViewById(R.id.editText_notes)).getText().toString().trim();
+				String name =
+						((EditText) addLocationDialogView.findViewById(R.id.editText_name)).getText().toString().trim();
+				String location =
+						((EditText) addLocationDialogView.findViewById(R.id.editText_location)).getText().toString().trim();
+				String address =
+						((EditText) addLocationDialogView.findViewById(R.id.editText_address)).getText().toString().trim();
+				String notes =
+						((EditText) addLocationDialogView.findViewById(R.id.editText_notes)).getText().toString().trim();
 
-				saveLocationToSD(name,location,address,notes);
-				LinearLayout locationLayout = displayNewLocation(new MyLocation(name,location,address,notes));
+				MyLocation newLocation = new MyLocation(name, location, address, notes);
+				newLocation.setID(locationsList.size() + 1);
+				databaseAdapter.addLocation(newLocation);
+				locationsList.add(newLocation);
+				LinearLayout locationLayout = displayNewLocation(newLocation);
 				locationLayout.requestFocus();
 			}
 		});
@@ -300,26 +444,83 @@ public class MainActivity extends AppCompatActivity
 		addLocationBuilder.show();
 	}
 
-	private void addLocationToDatabase(String name, String location, String address, String notes)
+	private void editLocation(int slno)
 	{
-		StringTokenizer tokenizer = new StringTokenizer(location,",");
-		MyLocation myLocation = new MyLocation(databaseAdapter.getNumLocations()+1, new Time(Calendar.getInstance()),
-				new Time(Calendar.getInstance()), name, Double.parseDouble(tokenizer.nextToken()),
-				Double.parseDouble(tokenizer.nextToken()), address, notes);
-		databaseAdapter.addLocation(myLocation);
+		final MyLocation myLocation = locationsList.get(slno);
+		final AlertDialog.Builder editLocationBuilder = new AlertDialog.Builder(this);
+		editLocationBuilder.setTitle("Edit Location");
+		LayoutInflater inflater = LayoutInflater.from(this);
+		final LinearLayout editLocationDialogView =
+				(LinearLayout) inflater.inflate(R.layout.layout_add_location, null);
+		((EditText) editLocationDialogView.findViewById(R.id.editText_name)).setText(myLocation.getName());
+		((EditText) editLocationDialogView.findViewById(R.id.editText_location)).setText(myLocation.getLocationString());
+		((EditText) editLocationDialogView.findViewById(R.id.editText_address)).setText(myLocation.getAddress());
+		((EditText) editLocationDialogView.findViewById(R.id.editText_notes)).setText(myLocation.getNotes());
+		editLocationBuilder.setView(editLocationDialogView);
+
+		editLocationBuilder.setPositiveButton("Add", new DialogInterface.OnClickListener()
+		{
+			@Override
+			public void onClick(DialogInterface dialog, int which)
+			{
+				String name =
+						((EditText) editLocationDialogView.findViewById(R.id.editText_name)).getText().toString().trim();
+				String location =
+						((EditText) editLocationDialogView.findViewById(R.id.editText_location)).getText().toString().trim();
+				String address =
+						((EditText) editLocationDialogView.findViewById(R.id.editText_address)).getText().toString().trim();
+				String notes =
+						((EditText) editLocationDialogView.findViewById(R.id.editText_notes)).getText().toString().trim();
+
+				MyLocation newLocation = new MyLocation(name, location, address, notes);
+				newLocation.setID(myLocation.getID());
+				newLocation.setModifiedTimeToCurrentTime();
+				databaseAdapter.updateLocation(newLocation);
+				locationsList.add(newLocation);
+				LinearLayout locationLayout = displayNewLocation(newLocation);
+				locationLayout.requestFocus();
+			}
+		});
+		editLocationBuilder.setNegativeButton("Cancel", null);
+		editLocationBuilder.show();
+	}
+
+	private void deleteLocation(final int slno)
+	{
+		final MyLocation myLocation1 = locationsList.get(slno);
+
+		AlertDialog.Builder deleteBuilder = new AlertDialog.Builder(MainActivity.this);
+		deleteBuilder.setTitle("Delete Location");
+		deleteBuilder.setMessage("Are you sure to delete location \"" + myLocation1.getName() +
+				"\" ?");
+		deleteBuilder.setPositiveButton("Delete", new DialogInterface.OnClickListener()
+		{
+			@Override
+			public void onClick(DialogInterface dialog, int which)
+			{
+				databaseAdapter.deleteLocation(myLocation1);
+				locationsList.remove(slno);
+				parentLayout.removeViewAt(slno);
+				Toast.makeText(MainActivity.this, myLocation1.getName() + " Location Deleted",
+						Toast.LENGTH_LONG).show();
+			}
+		});
+		deleteBuilder.setNegativeButton("Cancel", null);
+		deleteBuilder.show();
 	}
 
 	private void saveLocationToSD(String name, String location, String address, String notes)
 	{
-		File folder = new File(Environment.getExternalStoragePublicDirectory("Chaturvedi"), "Location Saver");
-		if(!folder.exists())
+		File folder = new File(Environment.getExternalStoragePublicDirectory("Chaturvedi"),
+				"Location Saver");
+		if (!folder.exists())
 		{
 			folder.mkdirs();
 		}
 
 		String fileName = "Locations.txt";
 		File locationsFile = new File(folder, fileName);
-		if(!locationsFile.exists())
+		if (!locationsFile.exists())
 		{
 			try
 			{
@@ -327,13 +528,14 @@ public class MainActivity extends AppCompatActivity
 			}
 			catch (IOException e)
 			{
-				Log.d("MainActivity",e.getMessage(),e.fillInStackTrace());
+				Log.d("MainActivity", e.getMessage(), e.fillInStackTrace());
 			}
 		}
 
 		try
 		{
-			BufferedWriter locationWriter = new BufferedWriter(new FileWriter(locationsFile,true));
+			BufferedWriter locationWriter = new BufferedWriter(new FileWriter(locationsFile,
+					true));
 			locationWriter.write(name + "\n");
 			locationWriter.write(location + "\n");
 			locationWriter.write(address + "\n");
@@ -342,21 +544,23 @@ public class MainActivity extends AppCompatActivity
 		}
 		catch (IOException e)
 		{
-			Log.d("MainActivity",e.getMessage(),e.fillInStackTrace());
+			Log.d("MainActivity", e.getMessage(), e.fillInStackTrace());
 		}
 	}
 
 	private void exportLocationsToSD()
 	{
-		File folder = new File(Environment.getExternalStoragePublicDirectory("Android"), "Chaturvedi/Location Saver");
-		if(!folder.exists())
+		File folder = new File(Environment.getExternalStoragePublicDirectory("Android"),
+				"Chaturvedi/Location Saver");
+		if (!folder.exists())
 		{
 			folder.mkdirs();
 		}
 
-		String fileName = "Locations-" + new Time(Calendar.getInstance()).getTimeInFileNameFormat() + ".txt";
+		String fileName =
+				"Locations-" + new Time(Calendar.getInstance()).getTimeInFileNameFormat() + ".txt";
 		File locationsFile = new File(folder, fileName);
-		if(!locationsFile.exists())
+		if (!locationsFile.exists())
 		{
 			try
 			{
@@ -364,19 +568,20 @@ public class MainActivity extends AppCompatActivity
 			}
 			catch (IOException e)
 			{
-				Log.d("MainActivity",e.getMessage(),e.fillInStackTrace());
+				Log.d("MainActivity", e.getMessage(), e.fillInStackTrace());
 			}
 		}
 
 		try
 		{
-			BufferedWriter locationWriter = new BufferedWriter(new FileWriter(locationsFile,true));
+			BufferedWriter locationWriter = new BufferedWriter(new FileWriter(locationsFile,
+					true));
 			locationWriter.write("Name\n");
 			locationWriter.write("Coordinates\n");
 			locationWriter.write("Address\n");
 			locationWriter.write("Notes\n\n");
 
-			for(MyLocation myLocation : locationsList)
+			for (MyLocation myLocation : locationsList)
 			{
 				locationWriter.write(myLocation.getName() + "\n");
 				locationWriter.write(myLocation.getLocationString() + "\n");
@@ -389,7 +594,7 @@ public class MainActivity extends AppCompatActivity
 		}
 		catch (IOException e)
 		{
-			Log.d("MainActivity",e.getMessage(),e.fillInStackTrace());
+			Log.d("MainActivity", e.getMessage(), e.fillInStackTrace());
 		}
 	}
 
@@ -397,7 +602,7 @@ public class MainActivity extends AppCompatActivity
 	{
 		// Start Activity to choose file
 		Intent fileIntent = new Intent(Intent.ACTION_GET_CONTENT);
-		fileIntent.setType("file/*"); // intent type to filter application based on your requirement
+		fileIntent.setType("*/*"); // intent type to filter application based on your requirement
 		startActivityForResult(fileIntent, Constants.CODE_FILE_CHOOSER);
 	}
 
@@ -417,9 +622,9 @@ public class MainActivity extends AppCompatActivity
 			locationsReader.readLine();
 			locationsReader.readLine();
 
-			int nextID = locationsList.size()+1;
+			int nextID = locationsList.size() + 1;
 			String line = locationsReader.readLine();
-			while(line != null)
+			while (line != null)
 			{
 				String name = line;
 				String location = locationsReader.readLine().trim();
@@ -427,16 +632,17 @@ public class MainActivity extends AppCompatActivity
 				String notes = locationsReader.readLine();
 				locationsReader.readLine();
 				line = locationsReader.readLine();
-				MyLocation myLocation = new MyLocation(name,location,address,notes);
+				MyLocation myLocation = new MyLocation(name, location, address, notes);
 				myLocation.setID(nextID++);
 				myLocations.add(myLocation);
 			}
 		}
 		catch (IOException | NumberFormatException e)
 		{
-			Log.d("MainActivity",e.getMessage(),e.fillInStackTrace());
+			Log.d("MainActivity", e.getMessage(), e.fillInStackTrace());
 			int numLocationsRead = myLocations.size();
-			Toast.makeText(MainActivity.this, "File has been corrupted. " + numLocationsRead + " Locations recovered",
+			Toast.makeText(MainActivity.this, "File has been corrupted. " + numLocationsRead +
+							" Locations recovered",
 					Toast.LENGTH_LONG).show();
 		}
 		databaseAdapter.addAllLocations(myLocations);
@@ -451,6 +657,7 @@ public class MainActivity extends AppCompatActivity
 		{
 			locationEditText = locationField;
 		}
+
 		@Override
 		public void onLocationChanged(Location location)
 		{

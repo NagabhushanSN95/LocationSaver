@@ -67,6 +67,11 @@ public class MyLocation
 		return createdTime;
 	}
 
+	public void setModifiedTimeToCurrentTime()
+	{
+		modifiedTime = new Time(Calendar.getInstance());
+	}
+
 	public Time getModifiedTime()
 	{
 		return modifiedTime;
