@@ -1,4 +1,4 @@
-package com.chaturvedi.locationsaver;
+package com.krishna.nagabhushansn95.locationsaver;
 
 public class Constants
 {

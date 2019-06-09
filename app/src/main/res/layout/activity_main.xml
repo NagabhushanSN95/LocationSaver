@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.chaturvedi.locationsaver.MainActivity">
+    tools:context="com.krishna.nagabhushansn95.locationsaver.MainActivity">
 
     <TextView
         android:id="@+id/krishna"

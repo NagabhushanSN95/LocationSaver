@@ -1,4 +1,4 @@
-package com.chaturvedi.locationsaver.database;
+package com.krishna.nagabhushansn95.locationsaver.database;
 
 import java.text.DecimalFormat;
 import java.util.Calendar;
