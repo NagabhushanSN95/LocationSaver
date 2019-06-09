@@ -1,7 +1,7 @@
 // Shree KRISHNAya Namaha
 // Author: Nagabhushan S N
 
-package com.chaturvedi.locationsaver;
+package com.krishna.nagabhushansn95.locationsaver;
 
 import android.app.Activity;
 import android.content.Context;
@@ -11,7 +11,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.widget.Toast;
 
-import com.chaturvedi.locationsaver.updates.Update01To03;
+import com.krishna.nagabhushansn95.locationsaver.updates.Update01To03;
 
 public class SplashActivity extends Activity
 {

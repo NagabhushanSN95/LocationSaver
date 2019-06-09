@@ -1,13 +1,13 @@
 // Shree KRISHNAya Namaha
 
-package com.chaturvedi.locationsaver.updates;
+package com.krishna.nagabhushansn95.locationsaver.updates;
 
 import android.content.Context;
 import android.os.Environment;
 import android.util.Log;
 
-import com.chaturvedi.locationsaver.database.DatabaseAdapter;
-import com.chaturvedi.locationsaver.database.MyLocation;
+import com.krishna.nagabhushansn95.locationsaver.database.DatabaseAdapter;
+import com.krishna.nagabhushansn95.locationsaver.database.MyLocation;
 
 import java.io.BufferedReader;
 import java.io.File;

@@ -1,8 +1,6 @@
 // Shree KRISHNAya Namaha
 
-package com.chaturvedi.locationsaver.database;
-
-import android.util.Log;
+package com.krishna.nagabhushansn95.locationsaver.database;
 
 import java.util.Calendar;
 import java.util.StringTokenizer;
