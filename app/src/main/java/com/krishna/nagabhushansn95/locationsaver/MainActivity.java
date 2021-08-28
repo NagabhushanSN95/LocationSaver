@@ -13,11 +13,11 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -108,6 +108,7 @@ public class MainActivity extends AppCompatActivity
 	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
 										   @NonNull int[] grantResults)
 	{
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 		boolean permissionGranted = (grantResults.length > 0) && (grantResults[0] == PackageManager.PERMISSION_GRANTED);
 		switch (requestCode)
 		{
@@ -144,6 +145,7 @@ public class MainActivity extends AppCompatActivity
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent intent)
 	{
+		super.onActivityResult(requestCode, resultCode, intent);
 		switch (requestCode)
 		{
 			case Constants.CODE_FILE_CHOOSER:
