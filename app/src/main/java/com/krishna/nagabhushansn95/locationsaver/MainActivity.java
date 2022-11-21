@@ -366,7 +366,7 @@ public class MainActivity extends AppCompatActivity
 						((EditText) addLocationDialogView.findViewById(R.id.editText_notes)).getText().toString().trim();
 
 				MyLocation newLocation = new MyLocation(name, location, address, notes);
-				newLocation.setID(locationsList.size() + 1);
+				newLocation.setID(databaseAdapter.getIDforNextLocation());
 				databaseAdapter.addLocation(newLocation);
 				locationsList.add(newLocation);
 //				saveLocationToSD(name,location,address,notes);

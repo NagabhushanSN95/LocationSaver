@@ -72,6 +72,30 @@ public class DatabaseAdapter extends SQLiteOpenHelper
 		return numTransactions;
 	}
 
+	// Get the id of the next transaction to be performed i.e. id(last transaction)+1
+	public int getIDforNextLocation()
+	{
+		if (getNumLocations() == 0)
+		{
+			return 1;
+		}
+
+		String selectQuery = "SELECT max(" + KEY_ID + ") FROM " + TABLE_LOCATIONS;
+		SQLiteDatabase db = this.getWritableDatabase();
+		Cursor cursor = db.rawQuery(selectQuery, null);
+		if (cursor.moveToFirst())
+		{
+			int id = Integer.parseInt(cursor.getString(0));
+			cursor.close();
+			db.close();
+			return id + 1;
+		}
+		else
+		{
+			return -1;
+		}
+	}
+
 	/**
 	 * Adds A New Location
 	 *
@@ -183,13 +207,13 @@ public class DatabaseAdapter extends SQLiteOpenHelper
 		SQLiteDatabase db = this.getWritableDatabase();
 		db.delete(TABLE_LOCATIONS, KEY_ID + " = ?", new String[] { String.valueOf(myLocation.getID()) });
 		//Update IDs of next Locations
-		for(int i = myLocation.getID(); i<= getNumLocations(); i++)
+		/*for(int i = myLocation.getID(); i<= getNumLocations(); i++)
 		{
 			ContentValues values = new ContentValues();
 			values.put(KEY_ID, i);
 			// updating row
 			db.update(TABLE_LOCATIONS, values, KEY_ID + " = ?", new String[] { String.valueOf(i) });
-			/*if(db.isOpen())
+			if(db.isOpen())
 			{
 				db.update(TABLE_LOCATIONS, values, KEY_ID + " = ?",
 						new String[] { String.valueOf(i) });
@@ -199,8 +223,8 @@ public class DatabaseAdapter extends SQLiteOpenHelper
 				db = this.getWritableDatabase();
 				db.update(TABLE_LOCATIONS, values, KEY_ID + " = ?",
 						new String[] { String.valueOf(i+1) });
-			}*/
-		}
+			}
+		}*/
 		db.close();
 	}
 
