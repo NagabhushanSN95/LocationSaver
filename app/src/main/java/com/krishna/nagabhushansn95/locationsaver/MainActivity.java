@@ -552,7 +552,7 @@ public class MainActivity extends AppCompatActivity
 
 	private void exportLocationsToSD()
 	{
-		File folder = new File(Environment.getExternalStoragePublicDirectory("Android"),
+		File folder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
 				"Chaturvedi/Location Saver");
 		if (!folder.exists())
 		{

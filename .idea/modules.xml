@@ -4,6 +4,9 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/LocationSaver.iml" filepath="$PROJECT_DIR$/LocationSaver.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/LocationSaver.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/LocationSaver.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/LocationSaver.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/LocationSaver.app.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/LocationSaver.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/LocationSaver.app.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/LocationSaver.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/LocationSaver.app.unitTest.iml" />
     </modules>
   </component>
 </project>
