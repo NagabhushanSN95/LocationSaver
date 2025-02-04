@@ -38,6 +38,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -151,12 +153,8 @@ public class MainActivity extends AppCompatActivity
 			case Constants.CODE_FILE_CHOOSER:
 				if (resultCode == RESULT_OK)
 				{
-					// Get the Uri of the selected file
-					String absolutePath = Objects.requireNonNull(intent.getData()).getPath();
-					absolutePath = Objects.requireNonNull(absolutePath)
-							.replaceAll("/document/primary:", "/storage/emulated/0/");
-					System.out.println(absolutePath);
-					readLocationsFromSD(absolutePath);
+					Uri uri = intent.getData();
+					readLocationsFromSD(uri);
 				}
 		}
 	}
@@ -603,19 +601,19 @@ public class MainActivity extends AppCompatActivity
 	private void importLocationsFromSD()
 	{
 		// Start Activity to choose file
-		Intent fileIntent = new Intent(Intent.ACTION_GET_CONTENT);
-		fileIntent.setType("*/*"); // intent type to filter application based on your requirement
-		startActivityForResult(fileIntent, Constants.CODE_FILE_CHOOSER);
+		Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+		intent.addCategory(Intent.CATEGORY_OPENABLE);
+		intent.setType("text/plain"); // Adjust type based on your file
+		startActivityForResult(intent, Constants.CODE_FILE_CHOOSER);
 	}
 
-	private void readLocationsFromSD(String path)
+	private void readLocationsFromSD(Uri uri)
 	{
-		File importFile = new File(path);
-
 		ArrayList<MyLocation> myLocations = new ArrayList<>();
 		try
 		{
-			BufferedReader locationsReader = new BufferedReader(new FileReader(importFile));
+			InputStream inputStream = getContentResolver().openInputStream(uri);
+			BufferedReader locationsReader = new BufferedReader(new InputStreamReader(inputStream));
 
 			// To remove initial header
 			locationsReader.readLine();

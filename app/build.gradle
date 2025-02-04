@@ -5,10 +5,10 @@ android {
 
     defaultConfig {
         applicationId "com.krishna.nagabhushansn95.locationsaver"
-        minSdkVersion 21
+        minSdkVersion 24
         targetSdk 34
-        versionCode 9
-        versionName "1.1.1"
+        versionCode 10
+        versionName "1.2.0"
     }
     buildTypes {
         release {
@@ -22,6 +22,6 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     testImplementation 'junit:junit:4.12'
-    implementation 'androidx.appcompat:appcompat:1.3.1'
-    implementation 'com.google.android.material:material:1.4.0'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
 }
